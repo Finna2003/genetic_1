@@ -22,22 +22,7 @@ struct Class {
     int timeslot;
 };
 
-vector<Class> generate_schedule() {
-    vector<Class> schedule;
-    for (const auto& group : GROUPS) {
-        for (int _ = 0; _ < WORKOUT_PER_DAY; ++_) {
-            Class random_class{
-                random_class.name = WORKOUT[rand() % WORKOUT.size()],
-                random_class.room = ROOMS[rand() % ROOMS.size()],
-                random_class.group = group,
-                random_class.timeslot = 0
-            };
-            schedule.push_back(random_class);
-        }
-    }
-    return schedule;
-}
-
+// Оцінка фітнес-функції для розкладу
 int fitness(const vector<Class>& schedule) {
     int conflicts = 0;
     for (size_t i = 0; i < schedule.size(); ++i) {
@@ -50,6 +35,7 @@ int fitness(const vector<Class>& schedule) {
     return conflicts;
 }
 
+// Мутація розкладу
 vector<Class> mutate(const vector<Class>& schedule) {
     vector<Class> mutated_schedule = schedule;
     int random_class_index = rand() % mutated_schedule.size();
@@ -57,6 +43,7 @@ vector<Class> mutate(const vector<Class>& schedule) {
     return mutated_schedule;
 }
 
+// Схрещування двох розкладів
 vector<Class> crossover(const vector<Class>& parent1, const vector<Class>& parent2) {
     int split_point = rand() % (parent1.size() - 1) + 1;
     vector<Class> child(parent1.begin(), parent1.begin() + split_point);
@@ -64,18 +51,30 @@ vector<Class> crossover(const vector<Class>& parent1, const vector<Class>& paren
     return child;
 }
 
+// Генетичний алгоритм
 vector<Class> genetic_algorithm() {
     vector<vector<Class>> population(POPULATION_SIZE, vector<Class>());
     vector<int> fitness_scores;
+
     for (auto& schedule : population) {
-        schedule = generate_schedule();
+        // Створення розкладу
+        schedule.resize(GROUPS.size() * WORKOUT_PER_DAY);
+        for (size_t i = 0; i < GROUPS.size(); ++i) {
+            for (int j = 0; j < WORKOUT_PER_DAY; ++j) {
+                schedule[i * WORKOUT_PER_DAY + j] = {
+                    WORKOUT[rand() % WORKOUT.size()],
+                    ROOMS[rand() % ROOMS.size()],
+                    GROUPS[i],
+                    0
+                };
+            }
+        }
+
+        // Оцінка фітнес-функції і додавання до вектора оцінок
+        fitness_scores.push_back(fitness(schedule));
     }
 
     for (int generation = 0; generation < GENERATIONS; ++generation) {
-        for (const auto& schedule : population) {
-            fitness_scores.push_back(fitness(schedule));
-        }
-
         vector<size_t> sorted_indices(population.size());
         iota(sorted_indices.begin(), sorted_indices.end(), 0);
         sort(sorted_indices.begin(), sorted_indices.end(),
